@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Stock Market Application Project</string>
+    <string name="welcome_to_the_stock_market_simulator">Welcome to the Stock Market Simulator</string>
+    <string name="dollarHelper">$</string>
+    <string name="enter_game">Enter Game</string>
+    <string name="enter_a_starting_dollar_amount">Enter a starting dollar amount</string>
+    <string name="balance">Balance: $</string>
+    <string name="search_for_a_stock">Search for a stock</string>
+</resources>
