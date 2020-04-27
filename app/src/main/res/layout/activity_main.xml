@@ -41,4 +41,45 @@
         android:text="Enable Search by Symbol"
         tools:layout_editor_absoluteX="7dp"
         tools:layout_editor_absoluteY="4dp" />
+
+    <EditText
+        android:id="@+id/textquantity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="# of shares"
+        android:inputType="number"/>
+
+
+    <Button
+        android:id="@+id/btnApply"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Apply " />
+
+    <RadioGroup
+        android:id="@+id/radioUpdate"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RadioButton
+            android:id="@+id/radioBuy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Buy" />
+
+        <RadioButton
+            android:id="@+id/radioSell"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sell" />
+
+        <TextView
+            android:id="@+id/textStockInformation"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="SYMBOL: CURRENT PRICE: " />
+
+    </RadioGroup>
+
 </LinearLayout>

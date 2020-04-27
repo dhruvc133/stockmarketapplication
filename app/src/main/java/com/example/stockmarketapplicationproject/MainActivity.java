@@ -6,6 +6,8 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -31,20 +33,63 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private HashMap<String, String> stocks = new HashMap<String, String>();
+    private HashMap<String, Integer> stockPersonalTracker = new HashMap<String, Integer>();
     private String[] STOCKS = new String[8882];
     private String[] STOCKS_SYMBOLS = new String[8882];
-    private JSONObject stockResponseFill;
-    private JSONArray metaData;
+    private JSONObject metaData;
+    private JSONArray refreshes;
     private double balance;
+    private boolean isStockSelected = false;
+    private RadioGroup buyorsellgroup;
+    private RadioButton buyorsell;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
         balance = getIntent().getDoubleExtra("startingValue", 0);
         TextView balanceInd = findViewById(R.id.balanceView);
         balanceInd.setText("Balance : $ " + balance);
+
+        Button apply = findViewById(R.id.btnApply);
+        buyorsellgroup = findViewById(R.id.radioUpdate);
+        RadioButton buy = findViewById(R.id.radioBuy);
+        RadioButton sell = findViewById(R.id.radioSell);
+        apply.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText quantityOfShares = findViewById(R.id.textquantity);
+                String test = quantityOfShares.getText().toString();
+                if (test.matches("")) {
+                    System.out.println("Invalid Entry");
+                    return;
+                }
+                if (!isStockSelected) {
+                    System.out.println("A Stock must be selected");
+                    return;
+                }
+                int numShares = Integer.parseInt(quantityOfShares.getText().toString());
+                if (buy.isChecked()) {
+                    buy(numShares);
+                }
+                else if (sell.isChecked()) {
+                    sell(numShares);
+                } else {
+                    System.out.println("Nothing selected");
+                }
+            }
+        });
+
+
+
+
+
+
+
+
 
 
         Button enterSearch = findViewById(R.id.enterSearch);
@@ -56,11 +101,6 @@ public class MainActivity extends AppCompatActivity {
                 if (doesStockExist(stockToSearch)) {
                     request(findStockinMap(stockToSearch));
                     requestSymbolSearch(stockToSearch);
-//                    try {
-//                        loadStockInformation();
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                    }
                 } else {
                     System.out.println("Stock does not exist");
                 }
@@ -83,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
                 STOCKS[index] = keyValSplit[1];
                 STOCKS_SYMBOLS[index] = keyValSplit[0];
                 stocks.put(keyValSplit[1], keyValSplit[0]);
+                stockPersonalTracker.put(keyValSplit[0], 0);
                 index++;
             }
         }
@@ -180,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
     public void request(String stockSymbol) {
         RequestQueue queue = Volley.newRequestQueue(this);
         String url ="https://www.alphavantage.co/query?function=" +
-                "TIME_SERIES_INTRADAY&symbol=" + stockSymbol + "&interval=5min&outputsize=compact&apikey=" +
+                "TIME_SERIES_INTRADAY&symbol=" + stockSymbol + "&interval=1min&outputsize=compact&apikey=" +
                 "V4DS7488LETWBK03";
 
 // Request a string response from the provided URL.
@@ -188,7 +229,12 @@ public class MainActivity extends AppCompatActivity {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        stockResponseFill = response;
+                        try {
+                            loadStockInformation(response);
+                            isStockSelected = true;
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -225,7 +271,25 @@ public class MainActivity extends AppCompatActivity {
         });
         queue.add(jsonRequest);
     }
-    public void loadStockInformation() throws JSONException {
-
+    public void loadStockInformation(JSONObject handleResponse) throws JSONException {
+        TextView stockInfoText = findViewById(R.id.textStockInformation);
+        System.out.println("RESPONSE: "  + handleResponse);
+        System.out.println("Meta Data: " + handleResponse.get("Meta Data"));
+        metaData = handleResponse.getJSONObject("Meta Data");
+        String lastRefresh =  metaData.get("3. Last Refreshed").toString();
+        String symbol = metaData.get("2. Symbol").toString();
+        //refreshes = handleResponse.getJSONArray("Time Series (1min)");
+//        JSONObject currentRefresh = refreshes.getJSONObject(0);
+//        double price = currentRefresh.getDouble("1. open");
+//        stockInfoText.setText("SYMBOL: " + symbol + "  " + "PRICE: " + price);
+//        metaData = handleResponse.getJSONArray("Meta Data");
+//        JSONObject lastRefresh = metaData.getJSONObject(3);
+//        System.out.println(lastRefresh);
+    }
+    public void buy(int numShares) {
+        System.out.println("TRYING TO BUY: " + numShares);
+    }
+    public void sell(int numShares) {
+        System.out.println("TRYING TO SELL: " + numShares);
     }
 }

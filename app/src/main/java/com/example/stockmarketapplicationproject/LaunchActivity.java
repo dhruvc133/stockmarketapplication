@@ -24,6 +24,11 @@ public class LaunchActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 EditText dollarAmountText = findViewById(R.id.enterValue);
+                String test = dollarAmountText.getText().toString();
+                if (test.matches("")) {
+                    System.out.println("Invalid Entry");
+                    return;
+                }
                 double dollarAmountValue = Double.parseDouble(dollarAmountText.getText().toString());
                 DecimalFormat format = new DecimalFormat("##.##");
                 dollarAmountValue = Double.parseDouble(format.format(dollarAmountValue));
