@@ -1,5 +1,6 @@
 package com.example.stockmarketapplicationproject;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -37,11 +38,14 @@ public class MainActivity extends AppCompatActivity {
     private String[] STOCKS = new String[8882];
     private String[] STOCKS_SYMBOLS = new String[8882];
     private JSONObject metaData;
-    private JSONArray refreshes;
+    private JSONObject refreshes;
     private double balance;
     private boolean isStockSelected = false;
     private RadioGroup buyorsellgroup;
     private RadioButton buyorsell;
+    double price;
+    String symbol;
+    TextView balanceInd;
 
 
     @Override
@@ -51,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         balance = getIntent().getDoubleExtra("startingValue", 0);
-        TextView balanceInd = findViewById(R.id.balanceView);
+        balanceInd = findViewById(R.id.balanceView);
         balanceInd.setText("Balance : $ " + balance);
 
         Button apply = findViewById(R.id.btnApply);
@@ -74,25 +78,32 @@ public class MainActivity extends AppCompatActivity {
                 int numShares = Integer.parseInt(quantityOfShares.getText().toString());
                 if (buy.isChecked()) {
                     buy(numShares);
-                }
-                else if (sell.isChecked()) {
+                } else if (sell.isChecked()) {
                     sell(numShares);
                 } else {
                     System.out.println("Nothing selected");
                 }
             }
         });
+        Button refresher = findViewById(R.id.btnRefresh);
+        refresher.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText stockSearch = findViewById(R.id.searchStock);
+                String stockToSearch = stockSearch.getText().toString();
+                if (stockToSearch.equals("") || stockSearch == null) {
+                    return;
+                }
+                if (doesStockExist(stockToSearch)) {
+                    request(findStockinMap(stockToSearch));
+                    requestSymbolSearch(stockToSearch);
+                } else {
+                    System.out.println("Stock does not exist");
+                }
+            }
+        });
 
-
-
-
-
-
-
-
-
-
-        Button enterSearch = findViewById(R.id.enterSearch);
+                Button enterSearch = findViewById(R.id.enterSearch);
         enterSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -123,21 +134,22 @@ public class MainActivity extends AppCompatActivity {
                 STOCKS[index] = keyValSplit[1];
                 STOCKS_SYMBOLS[index] = keyValSplit[0];
                 stocks.put(keyValSplit[1], keyValSplit[0]);
-                stockPersonalTracker.put(keyValSplit[0], 0);
                 index++;
             }
-        }
-        catch (IOException ioe) {
+            for (Map.Entry<String, String> stockEntry : stocks.entrySet()) {
+                stockPersonalTracker.put(stockEntry.getValue(), 0);
+            }
+            System.out.println("SS: " + stocks.size());
+            System.out.println("SPTS: " + stockPersonalTracker.size());
+        } catch (IOException ioe) {
             System.out.println("Exception while reading input " + ioe);
-        }
-        finally {
+        } finally {
             // close the streams using close method
             try {
                 if (br != null) {
                     br.close();
                 }
-            }
-            catch (IOException ioe) {
+            } catch (IOException ioe) {
                 System.out.println("Error while closing stream: " + ioe);
             }
 
@@ -156,12 +168,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     //search by symbol
     public void symbolOn() {
         AutoCompleteTextView editText = findViewById(R.id.searchStock);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, STOCKS_SYMBOLS);
         editText.setAdapter(adapter);
     }
+
     //search by full name
     public void nameOn() {
         AutoCompleteTextView editText = findViewById(R.id.searchStock);
@@ -171,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * stock to check against hash map to see if it exists
+     *
      * @param stockToSearch user input
      * @return true if the stock does exist in the hashmap, false otherwise.
      */
@@ -186,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * checks to see if the stock input is equivalent to a stock in the hashmap
+     *
      * @param stockToSearch the users input
      * @return the stock symbol part of the url
      */
@@ -210,17 +226,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public static void main( String[] args ) throws Exception
-    {
+    public static void main(String[] args) throws Exception {
 
     }
+
     /**
      * volley request to alphavantage api to get time series of the stock
+     *
      * @param stockSymbol symbol of stock we are attaching to the url
      */
     public void request(String stockSymbol) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="https://www.alphavantage.co/query?function=" +
+        String url = "https://www.alphavantage.co/query?function=" +
                 "TIME_SERIES_INTRADAY&symbol=" + stockSymbol + "&interval=1min&outputsize=compact&apikey=" +
                 "V4DS7488LETWBK03";
 
@@ -244,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
         queue.add(jsonRequest);
 
     }
+
     public void requestSymbolSearch(String search) {
         RequestQueue queue = Volley.newRequestQueue(this);
         String url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + search +
@@ -271,25 +289,80 @@ public class MainActivity extends AppCompatActivity {
         });
         queue.add(jsonRequest);
     }
+
+    @SuppressLint("SetTextI18n")
     public void loadStockInformation(JSONObject handleResponse) throws JSONException {
         TextView stockInfoText = findViewById(R.id.textStockInformation);
-        System.out.println("RESPONSE: "  + handleResponse);
+        System.out.println("RESPONSE: " + handleResponse);
         System.out.println("Meta Data: " + handleResponse.get("Meta Data"));
         metaData = handleResponse.getJSONObject("Meta Data");
-        String lastRefresh =  metaData.get("3. Last Refreshed").toString();
-        String symbol = metaData.get("2. Symbol").toString();
-        //refreshes = handleResponse.getJSONArray("Time Series (1min)");
-//        JSONObject currentRefresh = refreshes.getJSONObject(0);
-//        double price = currentRefresh.getDouble("1. open");
-//        stockInfoText.setText("SYMBOL: " + symbol + "  " + "PRICE: " + price);
-//        metaData = handleResponse.getJSONArray("Meta Data");
-//        JSONObject lastRefresh = metaData.getJSONObject(3);
-//        System.out.println(lastRefresh);
+        String lastRefresh = metaData.get("3. Last Refreshed").toString();
+        symbol = metaData.get("2. Symbol").toString();
+        refreshes = handleResponse.getJSONObject("Time Series (1min)");
+        JSONObject currentRefresh = refreshes.getJSONObject(lastRefresh);
+        System.out.println(currentRefresh);
+        price = currentRefresh.getDouble("1. open");
+        stockInfoText.setText("SYMBOL: " + symbol + "  " + "PRICE: " + price);
+        updateOwnedAmount();
     }
+
     public void buy(int numShares) {
-        System.out.println("TRYING TO BUY: " + numShares);
+        String searchInPersonal = "";
+        if (price * numShares <= balance) {
+            balance -= (price * numShares);
+            System.out.println(symbol);
+            for (Map.Entry<String, String> stockEntry : stocks.entrySet()) {
+                if (stockEntry.getValue().equals(symbol)) {
+                    searchInPersonal = stockEntry.getValue();
+                }
+            }
+            for (Map.Entry<String, Integer> stockEntry : stockPersonalTracker.entrySet()) {
+                if (searchInPersonal.equals(stockEntry.getKey())) {
+                    System.out.println("KEY :" + stockEntry.getKey());
+                    if (stockEntry.getKey().equals(symbol)) {
+                        stockEntry.setValue(stockEntry.getValue() + numShares);
+                        System.out.println("STOCK: " + stockEntry.getKey() + " CURRENT SHARES OWNED: " + stockEntry.getValue());
+                        balanceInd.setText("Balance : $ " + balance);
+                        break;
+                    }
+                }
+            }
+        }
+        updateOwnedAmount();
     }
+
     public void sell(int numShares) {
-        System.out.println("TRYING TO SELL: " + numShares);
+        String searchInPersonal = "";
+        for (Map.Entry<String, String> stockEntry : stocks.entrySet()) {
+            if (stockEntry.getValue().equals(symbol)) {
+                searchInPersonal = stockEntry.getValue();
+            }
+        }
+        for (Map.Entry<String, Integer> stockEntry : stockPersonalTracker.entrySet()) {
+            if (searchInPersonal.equals(stockEntry.getKey())) {
+                if (stockEntry.getValue() >= numShares) {
+                    balance += (numShares * price);
+                    stockEntry.setValue(stockEntry.getValue() - numShares);
+                    System.out.println("STOCK: " + stockEntry.getKey() + " CURRENT SHARES OWNED: " + stockEntry.getValue());
+                    balanceInd.setText("Balance : $ " + balance);
+                    break;
+                }
+            }
+        }
+        updateOwnedAmount();
+    }
+    public void updateOwnedAmount() {
+        TextView ownedStock = findViewById(R.id.txtamountOwned);
+        String searchInPersonal = "";
+        for (Map.Entry<String, String> stockEntry : stocks.entrySet()) {
+            if (stockEntry.getValue().equals(symbol)) {
+                searchInPersonal = stockEntry.getValue();
+            }
+        }
+        for (Map.Entry<String, Integer> stockEntry : stockPersonalTracker.entrySet()) {
+            if (searchInPersonal.equals(stockEntry.getKey())) {
+                ownedStock.setText("Currently Own: " + stockEntry.getValue());
+            }
+        }
     }
 }

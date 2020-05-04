@@ -74,11 +74,23 @@
             android:layout_height="wrap_content"
             android:text="Sell" />
 
+        <Button
+            android:id="@+id/btnRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Update Prices" />
+
         <TextView
             android:id="@+id/textStockInformation"
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:text="SYMBOL: CURRENT PRICE: " />
+
+        <TextView
+            android:id="@+id/txtamountOwned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Currently Own:" />
 
     </RadioGroup>
 
